@@ -127,7 +127,8 @@ $repositories | ForEach-Object {
     exec { git clone -b "$($_.tree)" --depth=1 -c advice.detachedHead=false "$($_.href)" "$repodir" }
 
     if ($_ | Get-Member submodules) {
-      exec { git -C "$repodir" submodule update --init --depth=1 }
+      exec { git -C "$repodir" submodule init }
+      exec { git -C "$repodir" submodule update }
     }
   }
 }
@@ -139,7 +140,7 @@ if (Test-Path .\build\python\python.exe) {
 }
 
 # Clone additional Pico-specific submodules in TinyUSB
-exec { git -C .\build\pico-sdk\lib\tinyusb submodule update --init --depth=1 hw\mcu\raspberry_pi }
+exec { git -C .\build\pico-sdk\lib\tinyusb submodule update --init --depth=1 hw\bsp\rp2040 }
 
 $sdkVersion = (cmake -P .\packages\pico-setup-windows\pico-sdk-version.cmake -N | Select-String -Pattern 'PICO_SDK_VERSION_STRING=(.*)$').Matches.Groups[1].Value
 if (-not ($sdkVersion -match $versionRegEx)) {
@@ -644,7 +645,7 @@ $($downloads | ForEach-Object {
 !endif # BUILD_UNINSTALLER
 "@ | Set-Content ".\$basename-$suffix.nsi"
 
-exec { .\build\NSIS\makensis /DBUILD_UNINSTALLER ".\$basename-$suffix.nsi" }
+exec { .\build\NSIS\makensis -V4 /DBUILD_UNINSTALLER ".\$basename-$suffix.nsi" }
 
 # The 'installer' that just writes the uninstaller asks for admin access, which is not actually needed.
 $env:__COMPAT_LAYER = "RunAsInvoker"
@@ -652,17 +653,17 @@ exec { Start-Process -FilePath ".\build\build-uninstaller-$suffix.exe" -Argument
 $env:__COMPAT_LAYER = ""
 
 # Sign files before packaging up the installer
-sign "build\uninstall-$suffix.exe",
-"build\openocd-install\mingw$bitness\bin\openocd.exe",
-"build\pico-sdk-tools\mingw$bitness\elf2uf2.exe",
-"build\pico-sdk-tools\mingw$bitness\pioasm.exe",
-"build\picotool-install\mingw$bitness\picotool.exe"
+# sign "build\uninstall-$suffix.exe",
+# "build\openocd-install\mingw$bitness\bin\openocd.exe",
+# "build\pico-sdk-tools\mingw$bitness\elf2uf2.exe",
+# "build\pico-sdk-tools\mingw$bitness\pioasm.exe",
+# "build\picotool-install\mingw$bitness\picotool.exe"
 
-exec { .\build\NSIS\makensis ".\$basename-$suffix.nsi" }
+exec { .\build\NSIS\makensis -V4 ".\$basename-$suffix.nsi" }
 Write-Host "Installer saved to $binfile"
 
 # Sign the installer
-sign $binfile
+#sign $binfile
 
 # Package OpenOCD separately as well
 

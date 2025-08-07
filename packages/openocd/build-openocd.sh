@@ -7,7 +7,7 @@ ARCH=$2
 
 cd openocd
 ./bootstrap
-./configure
+./configure --enable-internal-jimtcl
 make clean
 make -j4
 DESTDIR="$PWD/../openocd-install" make install
